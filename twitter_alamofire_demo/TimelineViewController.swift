@@ -7,12 +7,18 @@
 //
 
 import UIKit
+import AlamofireImage
 
-class TimelineViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+
+class TimelineViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, ComposeViewControllerDelegate {
     
     var tweets: [Tweet] = []
+    var refreshControl: UIRefreshControl!
+    
     
     @IBOutlet weak var tableView: UITableView!
+    
+    @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -20,9 +26,34 @@ class TimelineViewController: UIViewController, UITableViewDelegate, UITableView
         tableView.dataSource = self
         tableView.delegate = self
         
+        activityIndicator.startAnimating()
+        
         tableView.rowHeight = UITableViewAutomaticDimension
         tableView.estimatedRowHeight = 100
         
+        // Initialize a UIRefreshControl
+        refreshControl = UIRefreshControl()
+        refreshControl.addTarget(self, action: #selector(refreshControlAction(_:)), for: UIControlEvents.valueChanged)
+        // add refresh control to table view
+        tableView.insertSubview(refreshControl, at: 0)
+        
+        fetchTweets()
+    }
+    
+    func didPullToRefresh(_ refreshControl: UIRefreshControl) {
+        fetchTweets()
+        
+    }
+    
+
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        let composeViewController = segue.destination as! ComposeViewController //tell it its destination
+        composeViewController.delegate = self
+    }
+    
+    
+    
+    func fetchTweets() {
         APIManager.shared.getHomeTimeLine { (tweets, error) in
             if let tweets = tweets {
                 self.tweets = tweets
@@ -31,8 +62,23 @@ class TimelineViewController: UIViewController, UITableViewDelegate, UITableView
                 print("Error getting home timeline: " + error.localizedDescription)
             }
         }
+        
+        // Tell the refreshControl to stop spinning
+        self.refreshControl.endRefreshing()
+        //Tell the activityIndicator to stop spinning
+        self.activityIndicator.stopAnimating()
+        
     }
     
+    func refreshControlAction(_ refreshControl: UIRefreshControl) {
+        activityIndicator.startAnimating() //starts the spinny wheel in center of screen
+        fetchTweets()
+    }
+    
+    func didPostTweet(post: Tweet) {
+        tweets.insert(post, at: 0)
+        tableView.reloadData()
+    }
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return tweets.count
     }
