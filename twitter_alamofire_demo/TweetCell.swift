@@ -24,12 +24,12 @@ class TweetCell: UITableViewCell, TTTAttributedLabelDelegate {
     @IBOutlet weak var replyCountLabel: UILabel!
     @IBOutlet weak var retweetCountLabel: UILabel!
     @IBOutlet weak var likeCountLabel: UILabel!
-    @IBOutlet weak var topStackConstraint: NSLayoutConstraint!
+
     
+   
     var tweet: Tweet! {
         didSet {
             
-            //sets contexts of labels and image view
             tweetTextLabel.text = tweet.text
             nameLabel.text = tweet.user.name
             usernameLabel.text = tweet.user.screenName
